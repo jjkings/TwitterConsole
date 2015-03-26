@@ -39,7 +39,7 @@ public class TwitterStreamConsole {
 	 */
 	public static void main(String[] args) {
 		try {
-			String keyword = (args.length > 0) ? args[0] : "aaa";
+			String keyword = (args.length > 0) ? args[0] : null;
 			TwitterStreamConsole app = new TwitterStreamConsole();
 			//app.start_statusnet();
 			app.start_twitter(keyword, Boolean.getBoolean("bExpire"));
@@ -52,6 +52,8 @@ public class TwitterStreamConsole {
 	// 「つぶマップ」のキー
     private static final String CONSUMER_KEY = "cyiWV4WGg9WkQq93AMURg";
     private static final String CONSUMER_SECRET = "3qHf93ajA8SJPhl2r1cV9kT3Z5ocaiXiWLBTIT6nwUg";
+    
+    private int count;
     
     private void start_twitter(final String keyword, boolean bExpire)
     		throws TwitterException, IOException, BackingStoreException {
@@ -89,14 +91,29 @@ public class TwitterStreamConsole {
 			public void onStatus(Status tweet) {
 				User tweetuser = tweet.getUser();
 				GeoLocation pos = tweet.getGeoLocation();
-				System.out.printf("keyword=%s; ID=%d; %s %s; pos=%f,%f%n%s %n-----------%n",
-						keyword,
-						tweet.getId(),
-						tweet.getCreatedAt().toString(),
-						tweetuser.getName(),
-						(pos != null ? pos.getLatitude() : 0),
-						(pos != null ? pos.getLongitude() : 0),
-						tweet.getText());
+				String text = tweet.getText();
+				if (_isValidText(text)) {
+					System.out.printf("Count: %d%nKeyword: %s%nID: %d%nDate: %s%nName: %s%npos: %f,%f%n%s %n-----------%n",
+							++ count,
+							keyword,
+							tweet.getId(),
+							tweet.getCreatedAt().toString(),
+							tweetuser.getName(),
+							(pos != null ? pos.getLatitude() : 0),
+							(pos != null ? pos.getLongitude() : 0),
+							text);
+				}
+			}
+
+			// 日本語のツイートのみ選別
+			private boolean _isValidText(String text) {
+				for(int p = 0; p < text.length(); p ++) {
+					char c = text.charAt(p);
+					if ((c >= '\u3000' && c <= '\u30ff') || (c >= '\u4e00' && c <= '\u9fff') || (c >= '\uff00' && c <= '\uff9f')) {
+						return true;
+					}
+				}
+				return false;
 			}
 
 			@Override
@@ -123,40 +140,23 @@ public class TwitterStreamConsole {
 			
 		});
         
-		FilterQuery filterquery = new FilterQuery();
 
 		//streamをユーザIDで絞込
+//		FilterQuery filterquery = new FilterQuery();
 //		String screenName = "ユーザID";
 //		User user = twStream.showUser(screenName);
 //		long[] followers = new long[] {user.getId()};
 //		filterquery.follow(followers);
 
-		String[] track = keyword.split(",");
-		//String[] track = new String[] { keyword };
-		FilterQuery fQuery =  filterquery.track(track);
-		
-		twStream.filter(filterquery);
-		
-		/*
-		Query q = new Query();
-        q.setGeoCode(loc, 5, Query.KILOMETERS);
-        //q.setQuery("渋滞 OR 事故 OR 激混み -RT");
-        q.setQuery("人身事故 OR 運転を見合わせています OR 運転中止 OR 運転再開 OR 運転を再開 OR 遅延 -RT");
-        QueryResult qr = twitter.search(q);
-        List<Status> tweets = qr.getTweets();
-        int i = 0;
-		for(Status tweet : tweets) {
-			i++;
-			User tweetuser = tweet.getUser();
-			GeoLocation pos = tweet.getGeoLocation();
-			System.out.printf("[%d] %s %s%npos=%f,%f%n%s %n-----------%n",
-					tweet.getId(),
-					tweet.getCreatedAt().toString(),
-					tweetuser.getName(),
-					(pos != null ? pos.getLatitude() : 0),
-					(pos != null ? pos.getLongitude() : 0),
-					tweet.getText());
+		if (keyword != null) {
+			// キーワード指定時はフィルタ抽出
+			String[] track = keyword.split(",");
+			FilterQuery filterquery = new FilterQuery();
+			FilterQuery fQuery =  filterquery.track(track);
+			twStream.filter(filterquery);
+		} else {
+			// キーワード未指定時はサンプル抽出
+			twStream.sample();
 		}
-		*/
 	}
 }
