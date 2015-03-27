@@ -3,6 +3,7 @@ package test;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -55,6 +56,7 @@ public class TwitterStreamConsole {
     
     private int count;
     
+    private SimpleDateFormat dtformat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
     private void start_twitter(final String keyword, boolean bExpire)
     		throws TwitterException, IOException, BackingStoreException {
     	
@@ -93,15 +95,19 @@ public class TwitterStreamConsole {
 				GeoLocation pos = tweet.getGeoLocation();
 				String text = tweet.getText();
 				if (_isValidText(text)) {
-					System.out.printf("Count: %d%nKeyword: %s%nID: %d%nDate: %s%nName: %s%npos: %f,%f%n%s %n-----------%n",
-							++ count,
-							keyword,
-							tweet.getId(),
-							tweet.getCreatedAt().toString(),
-							tweetuser.getName(),
-							(pos != null ? pos.getLatitude() : 0),
-							(pos != null ? pos.getLongitude() : 0),
-							text);
+					System.out.println("Count: " + (++count));
+					System.out.println("Keyword: " + keyword);
+					System.out.println("ID: " + tweet.getId());
+					System.out.println("Date: " + dtformat.format(tweet.getCreatedAt()));
+					System.out.println("Pos: " + (pos != null ? pos.getLatitude() : 0) + "," + (pos != null ? pos.getLongitude() : 0));
+					System.out.println("User: " + tweetuser.getScreenName());
+					System.out.println("UserName: " + tweetuser.getName());
+					System.out.println("StatusesCount: " + tweetuser.getStatusesCount());
+					System.out.println("Friends: " + tweetuser.getFriendsCount());
+					System.out.println("Favourites: " + tweetuser.getFavouritesCount());
+					System.out.println("Followers: " + tweetuser.getFollowersCount());
+					System.out.println(text);
+					System.out.println("-----------");
 				}
 			}
 
